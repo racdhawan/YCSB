@@ -546,8 +546,29 @@ public class MongoDbClient extends DB {
                 }
             }
             u.put("$set", fieldsToSet);
-            UpdateResult res = collection.updateOne(q, u);
-            if (res.getMatchedCount() == 0) {
+	    // rdh
+	    //MongoDatabase db = table; //db name
+	    Document command = new Document("clusterUpdate",collection.getNamespace()).append("updates",List.of(new Document("q",q).append("u",u)));
+	    Document res = db[serverCounter++%db.length].runCommand(command);
+	    /*Document command = new Document("explain",
+            new Document("update", "info.asset")
+                .append("updates", List.of(
+                        new Document("q", Filters.and(
+                            Filters.eq("version", 3),
+                            Filters.eq("providerAssetId", "123"))
+                        )
+                        .append("u", Updates.set("version", 9))
+                        )
+                    )
+                )
+                .append("verbosity", "executionStats")
+        );*/
+	    //
+            //UpdateResult res = collection.updateOne(q, u);
+            //UpdateResult res = db.command("clusterUpdate", collection, updates=[{'q': q,'u': u}]);
+            //UpdateResult res = collection.updateOne(q, u);
+            //if (res.getMatchedCount() == 0) {
+            if (res.getInteger("nModified") == 0) {
                 System.err.println("Nothing updated for key " + key);
                 return 1;
             }
